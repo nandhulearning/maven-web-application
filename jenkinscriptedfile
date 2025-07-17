@@ -1,0 +1,26 @@
+node
+{
+echo "Jenkins Node Name ${env.NODE_NAME}"  
+ echo "Jenkins Home ${env.JENKINS_HOME}"
+  echo "Jenkins URL ${env.JENKINS_URL}"
+  echo "JOB Name ${env.JOB_NAME}"
+def mavenHome = tool name: "maven 3.9.10"
+
+stage('checkOutCode') {
+git branch: 'development', credentialsId: '6613c757-39d4-43ca-8e47-dced73343197', url: 'https://github.com/nandhulearning/maven-web-application.git'
+}
+stage('Build') {
+sh "${mavenHome}/bin/mvn clean package"
+}
+stage('ExecutesonarQubeReport') {
+sh "${mavenHome}/bin/mvn clean sonar:sonar"
+}
+stage('UploadArtifactsIntoNexus') {
+sh "${mavenHome}/bin/mvn clean deploy"
+}
+sshagent(['0f22e05f-2d8a-4567-b1e6-e877025f2bc8']) {
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.4.102:/opt/apache-tomcat-9.0.107/webapps/"
+}
+}
+
+
